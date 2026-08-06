@@ -8,10 +8,39 @@ from state import get_last_sync, update_sync
 
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s"
-)
+def mask_value(value):
+    """
+    Show only the last 3 characters of a value.
+    """
+
+    if not value:
+        return "<not set>"
+
+    if len(value) <= 3:
+        return "***"
+
+    return f"****{value[-3:]}"
+
+
+def log_configuration():
+    logging.info(
+        "Configuration: IP_CHECK_INTERVAL=%ss TRANSIP_UPDATE_COOLDOWN=%ss",
+        IP_CHECK_INTERVAL,
+        TRANSIP_UPDATE_COOLDOWN,
+    )
+
+    logging.info(
+        "TransIP configuration: account=%s vps=%s private_key=%s",
+        mask_value(
+            os.getenv("TRANSIP_ACCOUNT_NAME")
+        ),
+        mask_value(
+            os.getenv("TRANSIP_VPS_NAME")
+        ),
+        mask_value(
+            os.getenv("TRANSIP_PRIVATE_KEY")
+        ),
+    )
 
 
 IP_CHECK_INTERVAL = int(
