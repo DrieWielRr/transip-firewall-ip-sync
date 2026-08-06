@@ -7,6 +7,20 @@ from sync import sync_firewall
 from state import get_last_sync, update_sync
 
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+)
+
+
+IP_CHECK_INTERVAL = int(
+    os.getenv("IP_CHECK_INTERVAL", "30")
+)
+
+TRANSIP_UPDATE_COOLDOWN = int(
+    os.getenv("TRANSIP_UPDATE_COOLDOWN", "300")
+)
+
 
 def mask_value(value):
     """
@@ -29,24 +43,22 @@ def log_configuration():
         TRANSIP_UPDATE_COOLDOWN,
     )
 
+    private_key_file = os.getenv(
+        "TRANSIP_PRIVATE_KEY_FILE",
+        "/config/transip_private_key.pem",
+    )
+
     logging.info(
-        "TransIP configuration: access_token=%s vps=%s",
+        "TransIP configuration: account=%s vps=%s private_key_file=%s exists=%s",
         mask_value(
-            os.getenv("TRANSIP_ACCESS_TOKEN")
+            os.getenv("TRANSIP_ACCOUNT_NAME")
         ),
         mask_value(
             os.getenv("TRANSIP_VPS_NAME")
         ),
+        private_key_file,
+        os.path.exists(private_key_file),
     )
-
-
-IP_CHECK_INTERVAL = int(
-    os.getenv("IP_CHECK_INTERVAL", "30")
-)
-
-TRANSIP_UPDATE_COOLDOWN = int(
-    os.getenv("TRANSIP_UPDATE_COOLDOWN", "300")
-)
 
 
 def check_ip():
@@ -87,11 +99,7 @@ def main():
         "TransIP firewall IP sync started"
     )
 
-    logging.info(
-        "Configuration: IP_CHECK_INTERVAL=%ss TRANSIP_UPDATE_COOLDOWN=%ss",
-        IP_CHECK_INTERVAL,
-        TRANSIP_UPDATE_COOLDOWN,
-    )
+    log_configuration()
 
     while True:
         try:

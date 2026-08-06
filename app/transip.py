@@ -2,8 +2,8 @@ import logging
 import os
 import time
 
-import requests
 import jwt
+import requests
 
 
 TRANSIP_API_URL = "https://api.transip.nl/rest"
@@ -12,8 +12,9 @@ TRANSIP_ACCOUNT_NAME = os.getenv(
     "TRANSIP_ACCOUNT_NAME"
 )
 
-TRANSIP_PRIVATE_KEY = os.getenv(
-    "TRANSIP_PRIVATE_KEY"
+TRANSIP_PRIVATE_KEY_FILE = os.getenv(
+    "TRANSIP_PRIVATE_KEY_FILE",
+    "/config/transip_private_key.pem",
 )
 
 
@@ -35,20 +36,29 @@ class TransIPClient:
 
     def _get_private_key(self):
         """
-        Load private key from environment.
-
-        Converts escaped newlines from Docker variables.
+        Load private key from file.
         """
 
-        if not TRANSIP_PRIVATE_KEY:
+        if not os.path.exists(
+            TRANSIP_PRIVATE_KEY_FILE
+        ):
             raise RuntimeError(
-                "TRANSIP_PRIVATE_KEY is not configured"
+                f"TransIP private key file not found: "
+                f"{TRANSIP_PRIVATE_KEY_FILE}"
             )
 
-        return TRANSIP_PRIVATE_KEY.replace(
-            "\\n",
-            "\n",
-        )
+        try:
+            with open(
+                TRANSIP_PRIVATE_KEY_FILE,
+                "r",
+                encoding="utf-8",
+            ) as file:
+                return file.read()
+
+        except OSError as e:
+            raise RuntimeError(
+                f"Unable to read TransIP private key: {e}"
+            )
 
 
     def _create_access_token(self):
@@ -82,7 +92,7 @@ class TransIPClient:
         response = requests.post(
             f"{TRANSIP_API_URL}/auth",
             json={
-                "token": signed_request
+                "token": signed_request,
             },
             timeout=10,
         )
