@@ -10,6 +10,12 @@ import requests
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 
+from state import (
+    clear_access_token,
+    get_access_token as get_cached_access_token,
+    update_access_token,
+)
+
 from config import (
     TRANSIP_FIREWALL_RULES,
     TRANSIP_VPS_NAME,
@@ -130,10 +136,11 @@ class TransIPClient:
         data = response.json()
 
         token = data["token"]
+        expires = int(time.time()) + 1800
 
         return (
             token,
-            time.time() + 1800,
+            expires,
         )
 
 
@@ -142,16 +149,41 @@ class TransIPClient:
         Return a valid cached access token.
         """
 
+        now = time.time()
+
         if (
             self.access_token
-            and time.time() < self.token_expires
+            and now < self.token_expires
         ):
+            return self.access_token
+
+        cached = get_cached_access_token()
+
+        if (
+            cached
+            and now < cached.get(
+                "expires",
+                0,
+            )
+        ):
+            logging.info(
+                "Loaded cached TransIP access token"
+            )
+
+            self.access_token = cached["token"]
+            self.token_expires = cached["expires"]
+
             return self.access_token
 
         (
             self.access_token,
             self.token_expires,
         ) = self._create_access_token()
+
+        update_access_token(
+            self.access_token,
+            self.token_expires,
+        )
 
         return self.access_token
 
@@ -174,8 +206,15 @@ class TransIPClient:
         )
 
         response = self.session.get(
-            "https://api.transip.nl/v6"
+            TRANSIP_API_BASE_URL,
         )
+
+        if response.status_code == 401:
+            clear_access_token()
+
+            raise RuntimeError(
+                "Cached TransIP access token expired or is invalid"
+            )
 
         if not response.ok:
             raise RuntimeError(
@@ -216,6 +255,13 @@ class TransIPClient:
             url,
             timeout=10,
         )
+
+        if response.status_code == 401:
+            clear_access_token()
+
+            raise RuntimeError(
+                "Cached TransIP access token expired or is invalid"
+            )
 
         if not response.ok:
             raise RuntimeError(
@@ -272,10 +318,17 @@ class TransIPClient:
             )
 
         response = self.session.put(
-            f"https://api.transip.nl/v6/vps/{TRANSIP_VPS_NAME}/firewall",
+            f"{TRANSIP_API_BASE_URL}/vps/{TRANSIP_VPS_NAME}/firewall",
             json=firewall,
             timeout=10,
         )
+
+        if response.status_code == 401:
+            clear_access_token()
+
+            raise RuntimeError(
+                "Cached TransIP access token expired or is invalid"
+            )
 
         response.raise_for_status()
 

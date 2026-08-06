@@ -127,3 +127,53 @@ def update_sync_failed(ip, error):
     save_state(state)
 
     return state
+
+
+def get_access_token():
+    """
+    Return the cached TransIP access token.
+    """
+
+    state = load_state()
+
+    return state.get("access_token")
+
+
+def update_access_token(
+    token,
+    expires,
+):
+    """
+    Store the current TransIP access token.
+    """
+
+    state = load_state()
+
+    state["access_token"] = {
+        "token": token,
+        "expires": expires,
+        "timestamp": datetime.now(
+            timezone.utc
+        ).isoformat(),
+    }
+
+    save_state(state)
+
+    return state
+
+
+def clear_access_token():
+    """
+    Remove the cached TransIP access token.
+    """
+
+    state = load_state()
+
+    state.pop(
+        "access_token",
+        None,
+    )
+
+    save_state(state)
+
+    return state
