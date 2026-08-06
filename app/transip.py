@@ -103,7 +103,10 @@ class TransIPClient:
             "nonce": uuid.uuid4().hex,
             "read_only": False,
             "expiration_time": "30 minutes",
-            "label": "transip-firewall-ip-sync",
+            "label": (
+                "transip-firewall-ip-sync-"
+                f"{uuid.uuid4().hex[:8]}"
+            ),
             "global_key": True,
         }
 

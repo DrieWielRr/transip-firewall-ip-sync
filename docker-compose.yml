@@ -11,6 +11,7 @@ services:
       TRANSIP_ACCOUNT_NAME: ${TRANSIP_ACCOUNT_NAME}
       TRANSIP_VPS_NAME: ${TRANSIP_VPS_NAME}
       TRANSIP_PRIVATE_KEY_FILE: ${TRANSIP_PRIVATE_KEY_FILE:-/config/transip_private_key.pem}
+      TRANSIP_FIREWALL_RULES: ${TRANSIP_FIREWALL_RULES}
 
     volumes:
       - ${TRANSIP_DATA_PATH:-./data}:/data
