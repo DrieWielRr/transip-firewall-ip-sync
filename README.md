@@ -4,13 +4,15 @@ Docker service that monitors a dynamic public IP address and synchronizes TransI
 
 ## Environment variables
 
-| Variable                    | Default | Description                                      |
-| --------------------------- | ------- | ------------------------------------------------ |
-| IP_CHECK_INTERVAL            | 30      | Seconds between public IP checks                 |
-| TRANSIP_UPDATE_COOLDOWN      | 300     | Minimum time between TransIP firewall updates    |
-| TRANSIP_ACCOUNT_NAME         | -       | TransIP account name                             |
-| TRANSIP_PRIVATE_KEY          | -       | TransIP API private key                          |
-| TRANSIP_VPS_NAME             | -       | Name of the TransIP VPS to update firewall rules |
+| Variable                    | Default                     | Description                                      |
+| --------------------------- | --------------------------- | ------------------------------------------------ |
+| IP_CHECK_INTERVAL            | 30                          | Seconds between public IP checks                 |
+| TRANSIP_UPDATE_COOLDOWN      | 300                         | Minimum time between TransIP firewall updates    |
+| TRANSIP_ACCOUNT_NAME         | -                           | TransIP account name                             |
+| TRANSIP_PRIVATE_KEY_FILE     | /config/transip_private_key.pem | Path to TransIP API private key file          |
+| TRANSIP_VPS_NAME             | -                           | Name of the TransIP VPS to update firewall rules |
+| TRANSIP_DATA_PATH            | ./data                      | Host path for persistent application state       |
+| TRANSIP_CONFIG_PATH          | ./config                    | Host path containing configuration files         |
 
 ## Storage
 

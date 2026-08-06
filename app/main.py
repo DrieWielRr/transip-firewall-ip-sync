@@ -30,15 +30,12 @@ def log_configuration():
     )
 
     logging.info(
-        "TransIP configuration: account=%s vps=%s private_key=%s",
+        "TransIP configuration: access_token=%s vps=%s",
         mask_value(
-            os.getenv("TRANSIP_ACCOUNT_NAME")
+            os.getenv("TRANSIP_ACCESS_TOKEN")
         ),
         mask_value(
             os.getenv("TRANSIP_VPS_NAME")
-        ),
-        mask_value(
-            os.getenv("TRANSIP_PRIVATE_KEY")
         ),
     )
 

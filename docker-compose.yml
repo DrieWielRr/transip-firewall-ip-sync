@@ -7,9 +7,11 @@ services:
     environment:
       IP_CHECK_INTERVAL: ${IP_CHECK_INTERVAL:-30}
       TRANSIP_UPDATE_COOLDOWN: ${TRANSIP_UPDATE_COOLDOWN:-300}
+
       TRANSIP_ACCOUNT_NAME: ${TRANSIP_ACCOUNT_NAME}
-      TRANSIP_PRIVATE_KEY: ${TRANSIP_PRIVATE_KEY}
       TRANSIP_VPS_NAME: ${TRANSIP_VPS_NAME}
+      TRANSIP_PRIVATE_KEY_FILE: ${TRANSIP_PRIVATE_KEY_FILE:-/config/transip_private_key.pem}
 
     volumes:
-      - ./data:/data
+      - ${TRANSIP_DATA_PATH:-./data}:/data
+      - ${TRANSIP_CONFIG_PATH:-./config}:/config:ro
