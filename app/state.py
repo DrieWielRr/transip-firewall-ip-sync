@@ -79,9 +79,9 @@ def update_sync(ip):
 
     state = load_state()
 
-    previous_ip = state.get("last_ip")
+    previous_ip = state.get("observed_ip")
 
-    state["last_ip"] = ip
+    state["observed_ip"] = ip
 
     if previous_ip and previous_ip != ip:
         state["last_ip_change"] = {
@@ -101,3 +101,29 @@ def update_sync(ip):
     }
 
     save_state(state)
+
+    return state
+
+
+def update_sync_failed(ip, error):
+    """
+    Store a failed synchronization attempt.
+    """
+
+    state = load_state()
+
+    state["observed_ip"] = ip
+
+    state["last_sync"] = {
+        "ip": state.get("last_sync", {}).get("ip"),
+        "attempted_ip": ip,
+        "timestamp": datetime.now(
+            timezone.utc
+        ).isoformat(),
+        "status": "failed",
+        "error": error,
+    }
+
+    save_state(state)
+
+    return state

@@ -1,19 +1,28 @@
 import logging
 
+from transip import TransIPClient
+
 
 def sync_firewall(ip):
     """
     Synchronize firewall with the given IP.
-
-    Placeholder until TransIP API integration.
     """
 
     logging.info(
-        "Firewall synchronization requested for IP: %s",
+        "Starting firewall synchronization for %s",
         ip,
     )
 
-    # TODO:
-    # Call TransIP API here
+    client = TransIPClient()
+
+    if not client.test_connection():
+        logging.error(
+            "TransIP API connection failed"
+        )
+        return False
+
+    logging.info(
+        "TransIP API connection successful"
+    )
 
     return True
