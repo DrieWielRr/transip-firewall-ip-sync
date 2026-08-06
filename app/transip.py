@@ -285,30 +285,45 @@ class TransIPClient:
 
         rules = firewall["vpsFirewall"]["ruleSet"]
 
+        matched = 0
         updated = 0
 
         for rule in rules:
-            if rule.get("description") in TRANSIP_FIREWALL_RULES:
+            if rule.get("description") not in TRANSIP_FIREWALL_RULES:
+                continue
+
+            matched += 1
+
+            desired_whitelist = [
+                f"{ip}/32"
+            ]
+
+            if rule.get("whitelist") == desired_whitelist:
                 logging.info(
-                    "Updating firewall rule '%s' with IP %s",
+                    "Firewall rule '%s' already up-to-date",
                     rule["description"],
-                    ip,
                 )
 
-                logging.info(
-                    "Firewall rule '%s' whitelist: %s -> %s",
-                    rule["description"],
-                    rule.get("whitelist"),
-                    f"{ip}/32",
-                )
+                continue
 
-                rule["whitelist"] = [
-                    f"{ip}/32"
-                ]
+            logging.info(
+                "Updating firewall rule '%s' with IP %s",
+                rule["description"],
+                ip,
+            )
 
-                updated += 1
+            logging.info(
+                "Firewall rule '%s' whitelist: %s -> %s",
+                rule["description"],
+                rule.get("whitelist"),
+                desired_whitelist,
+            )
 
-        if updated == 0:
+            rule["whitelist"] = desired_whitelist
+
+            updated += 1
+
+        if matched == 0:
             available = [
                 rule.get("description")
                 for rule in rules
@@ -319,6 +334,13 @@ class TransIPClient:
                 f"Configured={TRANSIP_FIREWALL_RULES}, "
                 f"Available={available}"
             )
+
+        if updated == 0:
+            logging.info(
+                "Firewall configuration already up-to-date"
+            )
+
+            return True
 
         response = self.session.put(
             f"{TRANSIP_API_BASE_URL}/vps/{TRANSIP_VPS_NAME}/firewall",
