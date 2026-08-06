@@ -130,3 +130,57 @@ class TransIPClient:
             token,
             time.time() + 1800,
         )
+
+
+    def get_access_token(self):
+        """
+        Return a valid cached access token.
+        """
+
+        if (
+            self.access_token
+            and time.time() < self.token_expires
+        ):
+            return self.access_token
+
+        (
+            self.access_token,
+            self.token_expires,
+        ) = self._create_access_token()
+
+        return self.access_token
+
+
+    def test_connection(self):
+        """
+        Test authenticated API access.
+
+        No firewall changes.
+        """
+
+        token = self.get_access_token()
+
+        self.session.headers.update({
+            "Authorization": f"Bearer {token}",
+        })
+
+        logging.info(
+            "Testing TransIP API connection"
+        )
+
+        response = self.session.get(
+            "https://api.transip.nl/v6"
+        )
+
+        if not response.ok:
+            raise RuntimeError(
+                f"TransIP API connection failed "
+                f"({response.status_code}): "
+                f"{response.text[:500]}"
+            )
+
+        logging.info(
+            "TransIP API connection successful"
+        )
+
+        return True
