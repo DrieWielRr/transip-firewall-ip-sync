@@ -6,19 +6,15 @@ from ipcheck import get_public_ip
 from sync import sync_firewall
 from state import get_last_sync, update_sync
 
+from config import (
+    IP_CHECK_INTERVAL,
+    TRANSIP_UPDATE_COOLDOWN,
+    TRANSIP_FIREWALL_RULES,
+)
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
-)
-
-
-IP_CHECK_INTERVAL = int(
-    os.getenv("IP_CHECK_INTERVAL", "30")
-)
-
-TRANSIP_UPDATE_COOLDOWN = int(
-    os.getenv("TRANSIP_UPDATE_COOLDOWN", "300")
 )
 
 
@@ -58,6 +54,13 @@ def log_configuration():
         ),
         private_key_file,
         os.path.exists(private_key_file),
+    )
+
+    logging.info(
+        "TransIP firewall rules: %s",
+        ", ".join(TRANSIP_FIREWALL_RULES)
+        if TRANSIP_FIREWALL_RULES
+        else "<none>",
     )
 
 
