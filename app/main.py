@@ -3,7 +3,9 @@ import os
 import time
 
 from ipcheck import get_public_ip
-from state import get_last_ip, set_last_ip
+from sync import sync_firewall
+from state import get_last_sync, update_sync
+
 
 
 logging.basicConfig(
@@ -23,29 +25,33 @@ TRANSIP_UPDATE_COOLDOWN = int(
 
 def check_ip():
     current_ip = get_public_ip()
-    last_ip = get_last_ip()
+    last_sync = get_last_sync()
 
-    if last_ip is None:
+    if last_sync is None:
         logging.info(
-            "No previous IP found. Saving current IP: %s",
-            current_ip,
+            "No previous synchronization found"
         )
 
-        set_last_ip(current_ip)
+        if sync_firewall(current_ip):
+            update_sync(current_ip)
+
         return
+
+    last_ip = last_sync.get("ip")
 
     if current_ip != last_ip:
         logging.info(
-            "Public IP changed: %s -> %s",
+            "IP change detected: %s -> %s",
             last_ip,
             current_ip,
         )
 
-        set_last_ip(current_ip)
+        if sync_firewall(current_ip):
+            update_sync(current_ip)
 
     else:
         logging.info(
-            "Public IP unchanged: %s",
+            "IP unchanged and already synchronized: %s",
             current_ip,
         )
 

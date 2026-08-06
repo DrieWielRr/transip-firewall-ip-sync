@@ -38,47 +38,66 @@ def save_state(state):
     Save state to JSON file.
     """
 
-    STATE_FILE.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+    try:
+        STATE_FILE.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
 
-    with STATE_FILE.open(
-        "w",
-        encoding="utf-8",
-    ) as file:
-        json.dump(
-            state,
-            file,
-            indent=2,
+        with STATE_FILE.open(
+            "w",
+            encoding="utf-8",
+        ) as file:
+            json.dump(
+                state,
+                file,
+                indent=2,
+            )
+
+    except OSError as e:
+        logging.error(
+            "Unable to save state file %s: %s",
+            STATE_FILE,
+            e,
         )
 
 
-def get_last_ip():
+def get_last_sync():
+    """
+    Return the last successful synchronization data.
+    """
+
     state = load_state()
-    return state.get("last_ip")
+
+    return state.get("last_sync")
 
 
-def set_last_ip(ip):
+def update_sync(ip):
+    """
+    Store a successful TransIP synchronization.
+    """
+
     state = load_state()
 
-    old_ip = state.get("last_ip")
+    previous_ip = state.get("last_ip")
 
     state["last_ip"] = ip
 
-    if old_ip and old_ip != ip:
+    if previous_ip and previous_ip != ip:
         state["last_ip_change"] = {
-            "old_ip": old_ip,
+            "old_ip": previous_ip,
             "new_ip": ip,
             "timestamp": datetime.now(
                 timezone.utc
             ).isoformat(),
         }
 
-        logging.info(
-            "IP change detected: %s -> %s",
-            old_ip,
-            ip,
-        )
+    state["last_sync"] = {
+        "ip": ip,
+        "timestamp": datetime.now(
+            timezone.utc
+        ).isoformat(),
+        "status": "success",
+    }
 
     save_state(state)

@@ -29,7 +29,7 @@ def get_public_ip():
             response = requests.get(
                 provider,
                 headers=HEADERS,
-                timeout=5,
+                timeout=(2, 5)
             )
 
             response.raise_for_status()
