@@ -1,12 +1,17 @@
+import base64
+import json
 import logging
 import os
 import time
+import uuid
 
-import jwt
 import requests
 
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 
-TRANSIP_API_URL = "https://api.transip.nl/rest"
+
+TRANSIP_API_URL = "https://api.transip.nl/v6/auth"
 
 TRANSIP_ACCOUNT_NAME = os.getenv(
     "TRANSIP_ACCOUNT_NAME"
@@ -36,121 +41,92 @@ class TransIPClient:
 
     def _get_private_key(self):
         """
-        Load private key from file.
+        Load TransIP private key.
         """
-
-        if not os.path.exists(
-            TRANSIP_PRIVATE_KEY_FILE
-        ):
-            raise RuntimeError(
-                f"TransIP private key file not found: "
-                f"{TRANSIP_PRIVATE_KEY_FILE}"
-            )
 
         try:
             with open(
                 TRANSIP_PRIVATE_KEY_FILE,
-                "r",
-                encoding="utf-8",
+                "rb",
             ) as file:
-                return file.read()
+                return serialization.load_pem_private_key(
+                    file.read(),
+                    password=None,
+                )
 
-        except OSError as e:
+        except Exception as e:
             raise RuntimeError(
-                f"Unable to read TransIP private key: {e}"
+                f"Unable to load private key: {e}"
             )
+
+
+    def _create_signature(self, payload):
+        """
+        Sign request body using TransIP private key.
+        """
+
+        private_key = self._get_private_key()
+
+        signature = private_key.sign(
+            payload.encode("utf-8"),
+            padding.PKCS1v15(),
+            hashes.SHA512(),
+        )
+
+        return base64.b64encode(
+            signature
+        ).decode("ascii")
 
 
     def _create_access_token(self):
         """
-        Create a new TransIP access token.
-
-        TODO:
-        Implement TransIP Key Pair authentication.
+        Generate a TransIP access token.
         """
-
-        private_key = self._get_private_key()
 
         logging.info(
             "Creating TransIP access token"
         )
 
-        # Placeholder payload.
-        # Will be replaced with TransIP authentication format.
-
-        payload = {
+        request_body = {
             "login": TRANSIP_ACCOUNT_NAME,
-            "nonce": str(time.time()),
+            "nonce": uuid.uuid4().hex,
+            "read_only": False,
+            "expiration_time": "30 minutes",
+            "label": "transip-firewall-ip-sync",
+            "global_key": True,
         }
 
-        signed_request = jwt.encode(
-            payload,
-            private_key,
-            algorithm="RS256",
+        payload = json.dumps(
+            request_body,
+            separators=(",", ":"),
+        )
+
+        signature = self._create_signature(
+            payload
         )
 
         response = requests.post(
-            f"{TRANSIP_API_URL}/auth",
-            json={
-                "token": signed_request,
+            TRANSIP_API_URL,
+            data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Signature": signature,
             },
             timeout=10,
         )
 
-        response.raise_for_status()
+        if not response.ok:
+            raise RuntimeError(
+                f"TransIP authentication failed "
+                f"({response.status_code}): "
+                f"{response.text[:500]}"
+            )
 
         data = response.json()
 
-        token = data["access_token"]
+        token = data["token"]
 
-        expires = time.time() + data.get(
-            "expires_in",
-            3600,
+        return (
+            token,
+            time.time() + 1800,
         )
-
-        return token, expires
-
-
-    def get_access_token(self):
-        """
-        Return a valid cached access token.
-        """
-
-        if (
-            self.access_token
-            and time.time() < self.token_expires
-        ):
-            return self.access_token
-
-        (
-            self.access_token,
-            self.token_expires,
-        ) = self._create_access_token()
-
-        return self.access_token
-
-
-    def test_connection(self):
-        """
-        Test authenticated API access.
-
-        No firewall changes.
-        """
-
-        token = self.get_access_token()
-
-        self.session.headers.update({
-            "Authorization": f"Bearer {token}",
-        })
-
-        logging.info(
-            "Testing TransIP API connection"
-        )
-
-        response = self.session.get(
-            f"{TRANSIP_API_URL}/"
-        )
-
-        response.raise_for_status()
-
-        return True
