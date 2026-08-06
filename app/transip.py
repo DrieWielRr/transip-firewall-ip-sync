@@ -211,13 +211,7 @@ class TransIPClient:
         response = self.session.get(
             TRANSIP_API_BASE_URL,
         )
-
-        if response.status_code == 401:
-            clear_access_token()
-
-            raise RuntimeError(
-                "Cached TransIP access token expired or is invalid"
-            )
+        self._check_response(response)
 
         if not response.ok:
             raise RuntimeError(
@@ -258,13 +252,7 @@ class TransIPClient:
             url,
             timeout=10,
         )
-
-        if response.status_code == 401:
-            clear_access_token()
-
-            raise RuntimeError(
-                "Cached TransIP access token expired or is invalid"
-            )
+        self._check_response(response)
 
         if not response.ok:
             raise RuntimeError(
@@ -347,13 +335,7 @@ class TransIPClient:
             json=firewall,
             timeout=10,
         )
-
-        if response.status_code == 401:
-            clear_access_token()
-
-            raise RuntimeError(
-                "Cached TransIP access token expired or is invalid"
-            )
+        self._check_response(response)
 
         response.raise_for_status()
 
@@ -363,3 +345,14 @@ class TransIPClient:
         )
 
         return True
+
+
+    def _check_response(self, response):
+        if response.status_code == 401:
+            clear_access_token()
+
+            raise RuntimeError(
+                "Cached TransIP access token expired or is invalid"
+            )
+
+        response.raise_for_status()
