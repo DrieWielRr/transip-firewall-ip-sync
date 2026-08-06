@@ -1,0 +1,12 @@
+services:
+  transip-firewall-ip-sync:
+    build: .
+    container_name: transip-firewall-ip-sync
+    restart: unless-stopped
+
+    environment:
+      IP_CHECK_INTERVAL: 10
+      TRANSIP_UPDATE_COOLDOWN: 300
+
+    volumes:
+      - ./data:/data
