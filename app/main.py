@@ -10,6 +10,9 @@ from config import (
     IP_CHECK_INTERVAL,
     TRANSIP_UPDATE_COOLDOWN,
     TRANSIP_FIREWALL_RULES,
+    TRANSIP_UPDATE_DNS,
+    TRANSIP_DNS_RECORDS,
+    TRANSIP_DNS_TTL,
 )
 
 logging.basicConfig(
@@ -61,6 +64,33 @@ def log_configuration():
         ", ".join(TRANSIP_FIREWALL_RULES)
         if TRANSIP_FIREWALL_RULES
         else "<none>",
+    )
+
+    logging.info(
+        "TransIP update DNS: %s",
+        TRANSIP_UPDATE_DNS,
+    )
+
+    logging.info(
+        "TransIP firewall rules: %s",
+        ", ".join(TRANSIP_FIREWALL_RULES)
+        if TRANSIP_FIREWALL_RULES
+        else "<none>",
+    )
+
+    logging.info(
+        "TransIP DNS records: %s",
+        ", ".join(
+            f"{domain}=[{', '.join(records)}]"
+            for domain, records in TRANSIP_DNS_RECORDS.items()
+        )
+        if TRANSIP_DNS_RECORDS
+        else "<none>",
+    )
+
+    logging.info(
+        "TransIP DNS TTL: %s",
+        TRANSIP_DNS_TTL,
     )
 
 
