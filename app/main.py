@@ -3,7 +3,7 @@ import os
 import time
 
 from ipcheck import get_public_ip
-from sync import sync_firewall, can_sync
+from sync import sync_firewall, sync_dns, can_sync
 from state import get_last_sync, update_sync
 
 from config import (
@@ -73,7 +73,10 @@ def check_ip():
             "No previous synchronization found"
         )
 
-        if sync_firewall(current_ip):
+        firewall_ok = sync_firewall(current_ip)
+        dns_ok = sync_dns(current_ip)
+
+        if firewall_ok and dns_ok:
             update_sync(current_ip)
 
         return
@@ -90,13 +93,16 @@ def check_ip():
         if not can_sync():
             return
 
-        if sync_firewall(current_ip):
+        firewall_ok = sync_firewall(current_ip)
+        dns_ok = sync_dns(current_ip)
+
+        if firewall_ok and dns_ok:
             update_sync(current_ip)
 
 
 def main():
     logging.info(
-        "TransIP firewall IP sync started"
+        "TransIP IP syncer started"
     )
 
     log_configuration()

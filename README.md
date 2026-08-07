@@ -13,6 +13,10 @@ Docker service that monitors a dynamic public IP address and synchronizes TransI
 | `TRANSIP_PRIVATE_KEY_FILE` | `/config/transip_private_key.pem` | Path **inside the container** to the TransIP API private key   |
 | `TRANSIP_FIREWALL_RULES`   | `[]`                              | JSON array containing the firewall rule descriptions to update |
 
+| `TRANSIP_UPDATE_DNS`       | `false`                           | Enable updating DNS A records in addition to firewall rules    |
+| `TRANSIP_DNS_RECORDS`      | `{}`                              | JSON object mapping domains to DNS record names to update      |
+| `TRANSIP_DNS_TTL`          | `300`                             | TTL (in seconds) to set on updated DNS records                 |
+
 ### Example
 
 ```yaml
@@ -23,6 +27,9 @@ environment:
   TRANSIP_VPS_NAME: my-vps-name
   TRANSIP_PRIVATE_KEY_FILE: /config/transip_private_key.pem
   TRANSIP_FIREWALL_RULES: '["HTTP","HTTPS","SSH"]'
+  TRANSIP_UPDATE_DNS: true
+  TRANSIP_DNS_RECORDS: '{"example.com":["@","home","vpn"],"example2.com":["@","home"]}'
+  TRANSIP_DNS_TTL: 300
 ```
 
 The firewall rule descriptions must exactly match the `description` field of the corresponding TransIP VPS firewall rules.

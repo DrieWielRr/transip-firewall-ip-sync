@@ -35,3 +35,22 @@ TRANSIP_FIREWALL_RULES = json.loads(
         "[]",
     )
 )
+
+TRANSIP_UPDATE_DNS = os.getenv(
+    "TRANSIP_UPDATE_DNS",
+    "false",
+).lower() == "true"
+
+TRANSIP_DNS_RECORDS = json.loads(
+    os.getenv(
+        "TRANSIP_DNS_RECORDS",
+        "{}",
+    )
+)
+
+TRANSIP_DNS_TTL = int(
+    os.getenv(
+        "TRANSIP_DNS_TTL",
+        "300",
+    )
+)

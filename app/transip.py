@@ -19,6 +19,10 @@ from state import (
 from config import (
     TRANSIP_FIREWALL_RULES,
     TRANSIP_VPS_NAME,
+    TRANSIP_UPDATE_DNS,
+    TRANSIP_DOMAIN_NAME,
+    TRANSIP_DNS_RECORDS,
+    TRANSIP_DNS_TTL,
 )
 
 TRANSIP_API_BASE_URL = "https://api.transip.nl/v6"
@@ -347,6 +351,108 @@ class TransIPClient:
         return True
 
 
+    def update_dns_records(self, ip):
+        """
+        Update configured DNS A records with the current IP.
+        """
+
+        if not TRANSIP_UPDATE_DNS:
+            logging.debug("DNS updates disabled")
+            return True
+
+        token = self.get_access_token()
+
+        self.session.headers.update({
+            "Authorization": f"Bearer {token}",
+        })
+
+        total_updated = 0
+
+        for domain, record_names in TRANSIP_DNS_RECORDS.items():
+            url = (
+                f"{TRANSIP_API_BASE_URL}"
+                f"/domains/{domain}/dns"
+            )
+
+            logging.info(
+                "Retrieving DNS records for %s",
+                domain,
+            )
+
+            response = self.session.get(
+                url,
+                timeout=10,
+            )
+            self._check_response(response)
+
+            dns_entries = response.json()["dnsEntries"]
+
+            updated = 0
+
+            for record in dns_entries:
+                if (
+                    record["type"] != "A"
+                    or record["name"] not in record_names
+                ):
+                    continue
+
+                if record["content"] == ip:
+                    logging.info(
+                        "[%s] DNS record '%s' already up-to-date",
+                        domain,
+                        record["name"],
+                    )
+                    continue
+
+                logging.info(
+                    "[%s] Updating '%s': %s -> %s",
+                    domain,
+                    record["name"],
+                    record["content"],
+                    ip,
+                )
+
+                record["content"] = ip
+                record["expire"] = TRANSIP_DNS_TTL
+
+                updated += 1
+
+            if updated == 0:
+                logging.info(
+                    "[%s] DNS already up-to-date",
+                    domain,
+                )
+                continue
+
+            response = self.session.patch(
+                url,
+                json={
+                    "dnsEntries": dns_entries,
+                },
+                timeout=10,
+            )
+            self._check_response(response)
+
+            response.raise_for_status()
+
+            logging.info(
+                "[%s] Updated %d DNS record(s)",
+                domain,
+                updated,
+            )
+
+            total_updated += updated
+
+        logging.info(
+            "Updated %d DNS record(s) across %d domain(s)",
+            total_updated,
+            len(TRANSIP_DNS_RECORDS),
+        )
+
+        return True
+
+
+
     def _check_response(self, response):
         if response.status_code == 401:
             clear_access_token()
@@ -356,3 +462,5 @@ class TransIPClient:
             )
 
         response.raise_for_status()
+
+

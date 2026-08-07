@@ -38,6 +38,38 @@ def sync_firewall(ip):
     return True
 
 
+def sync_dns(ip):
+    """
+    Synchronize dns with the given IP.
+    """
+
+    logging.info(
+        "Starting dns synchronization for %s",
+        ip,
+    )
+
+    client = TransIPClient()
+
+    if not client.test_connection():
+        logging.error(
+            "TransIP API connection failed"
+        )
+        return False
+
+    if not client.update_dns_records(ip):
+        logging.error(
+            "dns update failed"
+        )
+        return False
+
+    logging.info(
+        "TransIP dns synchronization successful"
+    )
+
+    return True
+
+
+
 def can_sync():
     """
     Check whether a TransIP update is allowed.
