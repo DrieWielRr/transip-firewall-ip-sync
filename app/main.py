@@ -3,7 +3,7 @@ import os
 import time
 
 from ipcheck import get_public_ip
-from sync import sync_firewall
+from sync import sync_firewall, can_sync
 from state import get_last_sync, update_sync
 
 from config import (
@@ -87,14 +87,11 @@ def check_ip():
             current_ip,
         )
 
+        if not can_sync():
+            return
+
         if sync_firewall(current_ip):
             update_sync(current_ip)
-
-    else:
-        logging.info(
-            "IP unchanged and already synchronized: %s",
-            current_ip,
-        )
 
 
 def main():
