@@ -22,7 +22,7 @@ environment:
   TRANSIP_ACCOUNT_NAME: myaccount
   TRANSIP_VPS_NAME: my-vps-name
   TRANSIP_PRIVATE_KEY_FILE: /config/transip_private_key.pem
-  TRANSIP_FIREWALL_RULES: '["WireGuard","Portainer Agent","SSH"]'
+  TRANSIP_FIREWALL_RULES: '["HTTP","HTTPS","SSH"]'
 ```
 
 The firewall rule descriptions must exactly match the `description` field of the TransIP VPS firewall rules.
