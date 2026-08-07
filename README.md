@@ -1,17 +1,17 @@
 # transip-firewall-ip-sync
 
-Docker service that monitors a dynamic public IP address and synchronizes TransIP VPS firewall rules through the API.
+Docker service that monitors a dynamic public IP address and synchronizes TransIP VPS firewall rules through the TransIP REST API.
 
 ## Environment variables
 
-| Variable                   | Default                           | Description                                                   |
-| -------------------------- | --------------------------------- | ------------------------------------------------------------- |
-| `IP_CHECK_INTERVAL`        | `30`                              | Seconds between public IP checks                              |
-| `TRANSIP_UPDATE_COOLDOWN`  | `300`                             | Minimum time between TransIP firewall updates                 |
-| `TRANSIP_ACCOUNT_NAME`     | `-`                               | TransIP account name                                          |
-| `TRANSIP_VPS_NAME`         | `-`                               | Name of the TransIP VPS to update firewall rules              |
-| `TRANSIP_PRIVATE_KEY_FILE` | `/config/transip_private_key.pem` | Path to the TransIP API private key file inside the container |
-| `TRANSIP_FIREWALL_RULES`   | `[]`                              | JSON array containing firewall rule descriptions to update    |
+| Variable                   | Default                           | Description                                                    |
+| -------------------------- | --------------------------------- | -------------------------------------------------------------- |
+| `IP_CHECK_INTERVAL`        | `30`                              | Seconds between public IP checks                               |
+| `TRANSIP_UPDATE_COOLDOWN`  | `300`                             | Minimum time between TransIP firewall updates                  |
+| `TRANSIP_ACCOUNT_NAME`     | `-`                               | TransIP account name                                           |
+| `TRANSIP_VPS_NAME`         | `-`                               | Name of the TransIP VPS to update firewall rules               |
+| `TRANSIP_PRIVATE_KEY_FILE` | `/config/transip_private_key.pem` | Path **inside the container** to the TransIP API private key   |
+| `TRANSIP_FIREWALL_RULES`   | `[]`                              | JSON array containing the firewall rule descriptions to update |
 
 ### Example
 
@@ -25,13 +25,95 @@ environment:
   TRANSIP_FIREWALL_RULES: '["HTTP","HTTPS","SSH"]'
 ```
 
-The firewall rule descriptions must exactly match the `description` field of the TransIP VPS firewall rules.
+The firewall rule descriptions must exactly match the `description` field of the corresponding TransIP VPS firewall rules.
 
+## Private key
+
+The TransIP API private key is loaded from a file mounted into the container.
+The host directory containing the key is configured with:
+
+```yaml
+TRANSIP_CONFIG_PATH
+```
+
+By default:
+
+```yaml
+TRANSIP_CONFIG_PATH=./config
+```
+
+The container mounts this directory as:
+
+```text
+/config
+```
+
+The private key file path inside the container is configured with:
+
+```yaml
+TRANSIP_PRIVATE_KEY_FILE
+```
+
+Default:
+
+```text
+/config/transip_private_key.pem
+```
+
+Example host layout:
+
+```text
+.
+├── config
+│   └── transip_private_key.pem
+└── data
+    └── state.json
+```
+
+Example compose configuration:
+
+```yaml
+environment:
+  TRANSIP_PRIVATE_KEY_FILE: /config/transip_private_key.pem
+
+volumes:
+  - ./config:/config:ro
+```
+
+The private key file should contain the TransIP Key Pair private key in PEM format. The file is mounted read-only because the service only needs to read it.
 
 ## Storage
 
-Mount:
-/data
+The service stores runtime state in:
 
-The service stores its state in:
+```text
 /data/state.json
+```
+
+The host location can be configured with:
+
+```yaml
+TRANSIP_DATA_PATH
+```
+
+Default:
+
+```yaml
+TRANSIP_DATA_PATH=./data
+```
+
+Example:
+
+```yaml
+volumes:
+  - /your/docker/path/data:/data
+```
+
+The state file contains:
+* Last observed public IP
+* Last detected IP change
+* Last synchronization result
+* Cached TransIP access token
+
+```
+```
